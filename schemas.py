@@ -1,17 +1,9 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
-class UserCreate(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-    age: int | None = None
-
-class UserResponse(BaseModel):
-    id: int
-    username: str
-    email: EmailStr
-    age: int | None = None
-
-    class Config:
-        from_attributes = True
-
+# Skema untuk validasi data saat update user (semua opsional)
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    age: Optional[int] = None

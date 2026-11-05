@@ -5,19 +5,21 @@ import models, schemas
 from database import engine, get_db
 from hashing import Hash
 
-# 1. Inisialisasi app HARUS di atas sebelum dekorator endpoint (@app...)
+# Membuat tabel database secara otomatis jika belum ada
+models.Base.metadata.create_all(bind=engine)
+
 app = FastAPI(
     title="My User App",
     description="Aplikasi manajemen pengguna dengan FastAPI dan SQLAlchemy",
     version="1.0.0"
 )
 
-models.Base.metadata.create_all(bind=engine)
-
+# 1. Endpoint Root / Beranda
 @app.get("/")
 def read_root():
     return {"message": "Selamat datang di My User App dengan Database SQLAlchemy!"}
 
+# 2. Endpoint POST untuk Registrasi Pengguna Baru (dengan Hashing Password)
 @app.post("/users/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user_email = db.query(models.User).filter(models.User.email == user.email).first()
@@ -43,11 +45,13 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     return new_user
 
+# 3. Endpoint GET untuk Mengambil Seluruh Pengguna
 @app.get("/users", response_model=list[schemas.UserResponse])
 def get_users(db: Session = Depends(get_db)):
     users = db.query(models.User).all()
     return users
 
+# 4. Endpoint GET untuk Mencari Pengguna Berdasarkan ID
 @app.get("/users/{user_id}", response_model=schemas.UserResponse)
 def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -58,6 +62,31 @@ def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
         )
     return user
 
+# 5. Endpoint PUT untuk Memperbarui Data Pengguna Berdasarkan ID
+@app.put("/users/{user_id}", response_model=schemas.UserResponse)
+def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Pengguna dengan ID {user_id} tidak ditemukan"
+        )
+    
+    if user_update.username is not None:
+        user.username = user_update.username
+    if user_update.email is not None:
+        user.email = user_update.email
+    if user_update.age is not None:
+        user.age = user_update.age
+    if user_update.password is not None:
+        user.hashed_password = Hash.encrypt(user_update.password)
+
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+# 6. Endpoint DELETE untuk Menghapus Pengguna Berdasarkan ID
 @app.delete("/users/{user_id}", status_code=status.HTTP_200_OK)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -72,6 +101,7 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     
     return {"message": f"Pengguna dengan ID {user_id} berhasil dihapus"}
 
+# 7. Endpoint POST untuk Login & Autentikasi Pengguna
 @app.post("/users/login")
 def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
