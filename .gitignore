@@ -1,4 +1,12 @@
-node_modules/
-.wrangler/
-dist/
+# Python Virtual Environment
+venv/
+ENV/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
 .env
