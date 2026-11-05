@@ -143,7 +143,27 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
         "token_type": "bearer"
     }
 
-# 8. Endpoint Terproteksi (Contoh: Profil User yang sedang Login)
+# 8. Endpoint Terproteksi: Profil User yang sedang Login
 @app.get("/users/me/profile", response_model=schemas.UserResponse)
 def get_current_user_profile(current_user: models.User = Depends(get_current_user)):
     return current_user
+
+# 9. Endpoint Terproteksi: Ubah Password User yang sedang Login
+@app.put("/users/me/change-password")
+def change_password(
+    data: schemas.ChangePassword,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # 1. Verifikasi apakah password lama benar
+    if not Hash.verify(data.old_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password lama salah!"
+        )
+    
+    # 2. Enkripsi dan simpan password baru
+    current_user.hashed_password = Hash.encrypt(data.new_password)
+    db.commit()
+    
+    return {"message": "Password berhasil diperbarui!"}

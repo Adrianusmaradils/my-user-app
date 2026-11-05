@@ -7,3 +7,6 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[str] = None
     age: Optional[int] = None
+class ChangePassword(BaseModel):
+    old_password: str
+    new_password: str
