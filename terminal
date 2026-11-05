@@ -1,6 +1,0 @@
-npx wrangler d1 list
-npx wrangler deploy
-nano wrangler.json
-nano public/index.html
-nano src/index.js
-
