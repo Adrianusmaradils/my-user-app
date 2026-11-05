@@ -1,25 +1,42 @@
 from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 import models, schemas
 from database import engine, get_db
 from hashing import Hash
+from token_auth import create_access_token, verify_access_token
 
 # Membuat tabel database secara otomatis jika belum ada
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="My User App",
-    description="Aplikasi manajemen pengguna dengan FastAPI dan SQLAlchemy",
+    description="Aplikasi manajemen pengguna dengan FastAPI, SQLAlchemy, dan JWT Authentication",
     version="1.0.0"
 )
+
+# Konfigurasi skema OAuth2 untuk Swagger UI
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
+
+# Fungsi Dependensi untuk Memverifikasi Token & Mengambil User yang Sedang Login
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    username = verify_access_token(token, credentials_exception)
+    user = db.query(models.User).filter(models.User.username == username).first()
+    if user is None:
+        raise credentials_exception
+    return user
 
 # 1. Endpoint Root / Beranda
 @app.get("/")
 def read_root():
-    return {"message": "Selamat datang di My User App dengan Database SQLAlchemy!"}
+    return {"message": "Selamat datang di My User App dengan FastAPI & JWT!"}
 
-# 2. Endpoint POST untuk Registrasi Pengguna Baru (dengan Hashing Password)
+# 2. Endpoint POST untuk Registrasi Pengguna Baru
 @app.post("/users/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user_email = db.query(models.User).filter(models.User.email == user.email).first()
@@ -101,7 +118,7 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     
     return {"message": f"Pengguna dengan ID {user_id} berhasil dihapus"}
 
-# 7. Endpoint POST untuk Login & Autentikasi Pengguna
+# 7. Endpoint POST untuk Login & Mengembalikan JWT Access Token
 @app.post("/users/login")
 def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
@@ -119,8 +136,14 @@ def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    access_token = create_access_token(data={"sub": user.username})
+    
     return {
-        "message": "Login berhasil!",
-        "username": user.username,
-        "email": user.email
+        "access_token": access_token,
+        "token_type": "bearer"
     }
+
+# 8. Endpoint Terproteksi (Contoh: Profil User yang sedang Login)
+@app.get("/users/me/profile", response_model=schemas.UserResponse)
+def get_current_user_profile(current_user: models.User = Depends(get_current_user)):
+    return current_user
