@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Pengguna - Cloudflare D1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Manajemen Pengguna</h1>
+                <p class="text-gray-600">Cloudflare Workers + D1 SQLite</p>
+            </div>
+            <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition">+ Tambah User</button>
+        </header>
+
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 border-b border-gray-200 text-gray-700 uppercase text-xs">
+                    <tr>
+                        <th class="py-3 px-6">ID</th>
+                        <th class="py-3 px-6">Nama Lengkap</th>
+                        <th class="py-3 px-6">Username</th>
+                        <th class="py-3 px-6">Email</th>
+                        <th class="py-3 px-6">Role</th>
+                        <th class="py-3 px-6 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody" class="divide-y divide-gray-200 text-sm text-gray-600">
+                    <tr><td colspan="6" class="text-center py-6">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="userModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-xl">
+            <h2 id="modalTitle" class="text-xl font-bold mb-4 text-gray-800">Tambah User Baru</h2>
+            <form id="userForm" onsubmit="saveUser(event)">
+                <input type="hidden" id="userId">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Lengkap</label>
+                    <input type="text" id="fullName" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-semibold mb-2">Username</label>
+                    <input type="text" id="username" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-semibold mb-2">Email</label>
+                    <input type="email" id="email" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-semibold mb-2">Role</label>
+                    <select id="role" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="user">User</option>
+                        <option value="moderator">Moderator</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-4 py-2 rounded-lg">Batal</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/users';
+
+        async function fetchUsers() {
+            const res = await fetch(API_URL);
+            const json = await res.json();
+            const tbody = document.getElementById('userTableBody');
+            if (!json.data || json.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-gray-400">Belum ada data pengguna.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = json.data.map(user => `
+                <tr class="hover:bg-gray-50">
+                    <td class="py-3 px-6 font-medium text-gray-900">#${user.id}</td>
+                    <td class="py-3 px-6">${user.full_name}</td>
+                    <td class="py-3 px-6">${user.username}</td>
+                    <td class="py-3 px-6">${user.email}</td>
+                    <td class="py-3 px-6"><span class="px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}">${user.role}</span></td>
+                    <td class="py-3 px-6 text-center space-x-2">
+                        <button onclick="editUser(${user.id}, '${user.full_name}', '${user.username}', '${user.email}', '${user.role}')" class="text-blue-600 hover:underline">Edit</button>
+                        <button onclick="deleteUser(${user.id})" class="text-red-600 hover:underline">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        function openModal(isEdit = false) {
+            document.getElementById('userModal').classList.remove('hidden');
+            if (!isEdit) {
+                document.getElementById('modalTitle').innerText = 'Tambah User Baru';
+                document.getElementById('userForm').reset();
+                document.getElementById('userId').value = '';
+            }
+        }
+        function closeModal() { document.getElementById('userModal').classList.add('hidden'); }
+        function editUser(id, fullName, username, email, role) {
+            openModal(true);
+            document.getElementById('modalTitle').innerText = 'Edit User';
+            document.getElementById('userId').value = id;
+            document.getElementById('fullName').value = fullName;
+            document.getElementById('username').value = username;
+            document.getElementById('email').value = email;
+            document.getElementById('role').value = role;
+        }
+        async function saveUser(e) {
+            e.preventDefault();
+            const id = document.getElementById('userId').value;
+            const data = {
+                full_name: document.getElementById('fullName').value,
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                role: document.getElementById('role').value
+            };
+            const url = id ? `${API_URL}/${id}` : API_URL;
+            const method = id ? 'PUT' : 'POST';
+            const res = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+            if (json.success) { closeModal(); fetchUsers(); } else { alert('Gagal: ' + json.message); }
+        }
+        async function deleteUser(id) {
+            if (confirm('Yakin ingin menghapus user ini?')) {
+                const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                const json = await res.json();
+                if (json.success) fetchUsers();
+            }
+        }
+        fetchUsers();
+    </script>
+</body>
+</html>
+EOF

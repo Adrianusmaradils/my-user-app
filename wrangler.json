@@ -1,0 +1,16 @@
+{
+  "name": "my-user-app",
+  "main": "src/index.js",
+  "compatibility_date": "2026-01-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "my-user-db",
+      "database_id": "cd2ef316-0e6e-4f15-a22a-1f7b1b610588"
+    }
+  ]
+}
