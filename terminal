@@ -1,1 +1,9 @@
 cd my-user-app
+source ../venv/bin/activate
+git add .
+git commit -m
+git push origin main
+uvicorn main:app --reload
+http://127.0.0.1:8000/docs
+git status
+
