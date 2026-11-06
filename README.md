@@ -1,5 +1,8 @@
 # 🚀 Cloudflare Workers User Management App
 
+# LIVE DEMO
+https://my-user-app.maradiladrianus.workers.dev
+
 Aplikasi web full-stack untuk manajemen pengguna (User Management) yang dibangun menggunakan teknologi modern serverless dan edge computing.
 
 ## 🛠️ Teknologi yang Digunakan
