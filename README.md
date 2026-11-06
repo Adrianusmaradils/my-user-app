@@ -2,6 +2,7 @@
 
 # LIVE DEMO
 https://my-user-app.maradiladrianus.workers.dev
+cloudflared tunnel --url http://localhost:8787
 
 Aplikasi web full-stack untuk manajemen pengguna (User Management) yang dibangun menggunakan teknologi modern serverless dan edge computing.
 
