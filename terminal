@@ -6,4 +6,8 @@ git push origin main
 uvicorn main:app --reload
 http://127.0.0.1:8000/docs
 git status
+npx wrangler dev
+cat src/index.js
+npx wrangler d1 execute Adrianusmaradils --local --command="ALTER TABLE users ADD COLUMN phone TEXT;"
 
+npx wrangler login
