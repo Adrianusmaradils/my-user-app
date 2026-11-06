@@ -1,162 +1,166 @@
-mkdir -p public
 cat << 'EOF' > public/index.html
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Pengguna - Cloudflare D1</title>
+    <title>Manajemen Pengguna - Cloudflare Workers + D1 SQLite</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 font-sans antialiased">
     <div class="container mx-auto px-4 py-8 max-w-5xl">
-        <header class="mb-8 flex justify-between items-center">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
             <div>
                 <h1 class="text-3xl font-bold text-gray-800">Manajemen Pengguna</h1>
-                <p class="text-gray-600">Cloudflare Workers + D1 SQLite</p>
+                <p class="text-gray-600 text-sm">Cloudflare Workers + D1 SQLite</p>
             </div>
-            <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition">+ Tambah User</button>
-        </header>
+            <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow transition">+ Tambah User</button>
+        </div>
 
-        <div class="bg-white rounded-xl shadow overflow-hidden">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50 border-b border-gray-200 text-gray-700 uppercase text-xs">
+        <!-- Tabel Data -->
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <th class="py-3 px-6">ID</th>
-                        <th class="py-3 px-6">Nama Lengkap</th>
-                        <th class="py-3 px-6">Username</th>
-                        <th class="py-3 px-6">Email</th>
-                        <th class="py-3 px-6">Role</th>
-                        <th class="py-3 px-6 text-center">Aksi</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Lengkap</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="userTableBody" class="divide-y divide-gray-200 text-sm text-gray-600">
-                    <tr><td colspan="6" class="text-center py-6">Memuat data...</td></tr>
+                <tbody id="userTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Data akan dimuat melalui JavaScript -->
                 </tbody>
             </table>
         </div>
     </div>
 
-    <div id="userModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-xl">
-            <h2 id="modalTitle" class="text-xl font-bold mb-4 text-gray-800">Tambah User Baru</h2>
+    <!-- Modal Form Tambah User -->
+    <div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Tambah User Baru</h2>
             <form id="userForm" onsubmit="saveUser(event)">
-                <input type="hidden" id="userId">
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Lengkap</label>
-                    <input type="text" id="fullName" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Nama Lengkap</label>
+                    <input type="text" id="full_name" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-semibold mb-2">Username</label>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Username</label>
                     <input type="text" id="username" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-semibold mb-2">Email</label>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
                     <input type="email" id="email" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
-                <div class="mb-6">
-                    <label class="block text-gray-700 text-sm font-semibold mb-2">Role</label>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Role</label>
                     <select id="role" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="user">User</option>
-                        <option value="moderator">Moderator</option>
                         <option value="admin">Admin</option>
                     </select>
                 </div>
                 <div class="flex justify-end space-x-2">
-                    <button type="button" onclick="closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-4 py-2 rounded-lg">Batal</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg">Simpan</button>
+                    <button type="button" onclick="closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg font-medium">Batal</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">Simpan</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Script JavaScript Frontend -->
     <script>
         const API_URL = '/api/users';
 
         async function fetchUsers() {
             try {
-                const res = await fetch(API_URL);
-                const json = await res.json();
+                const response = await fetch(API_URL);
+                const result = await response.json();
                 const tbody = document.getElementById('userTableBody');
-                if (!json.data || json.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-gray-400">Belum ada data pengguna.</td></tr>';
-                    return;
+                tbody.innerHTML = '';
+
+                if (result.success && result.data.length > 0) {
+                    result.data.forEach(user => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.id}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.full_name}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.username}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 uppercase">${user.role}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                    <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900 bg-red-100 hover:bg-red-200 px-3 py-1 rounded">Hapus</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">Belum ada data pengguna.</td></tr>`;
                 }
-                tbody.innerHTML = json.data.map(user => `
-                    <tr class="hover:bg-gray-50">
-                        <td class="py-3 px-6 font-medium text-gray-900">#${user.id}</td>
-                        <td class="py-3 px-6">${user.full_name}</td>
-                        <td class="py-3 px-6">${user.username}</td>
-                        <td class="py-3 px-6">${user.email}</td>
-                        <td class="py-3 px-6"><span class="px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}">${user.role}</span></td>
-                        <td class="py-3 px-6 text-center space-x-2">
-                            <button onclick="editUser(${user.id}, '${user.full_name}', '${user.username}', '${user.email}', '${user.role}')" class="text-blue-600 hover:underline font-medium">Edit</button>
-                            <button onclick="deleteUser(${user.id})" class="text-red-600 hover:underline font-medium">Hapus</button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (err) {
-                console.error(err);
-                document.getElementById('userTableBody').innerHTML = '<tr><td colspan="6" class="text-center py-6 text-red-500">Gagal memuat data dari database D1.</td></tr>';
+            } catch (error) {
+                console.error('Gagal memuat data:', error);
             }
         }
 
-        function openModal(isEdit = false) {
+        function openModal() {
             document.getElementById('userModal').classList.remove('hidden');
-            if (!isEdit) {
-                document.getElementById('modalTitle').innerText = 'Tambah User Baru';
-                document.getElementById('userForm').reset();
-                document.getElementById('userId').value = '';
-            }
         }
 
-        function closeModal() { 
-            document.getElementById('userModal').classList.add('hidden'); 
+        function closeModal() {
+            document.getElementById('userModal').classList.add('hidden');
+            document.getElementById('userForm').reset();
         }
 
-        function editUser(id, fullName, username, email, role) {
-            openModal(true);
-            document.getElementById('modalTitle').innerText = 'Edit User';
-            document.getElementById('userId').value = id;
-            document.getElementById('fullName').value = fullName;
-            document.getElementById('username').value = username;
-            document.getElementById('email').value = email;
-            document.getElementById('role').value = role;
-        }
-
-        async function saveUser(e) {
-            e.preventDefault();
-            const id = document.getElementById('userId').value;
-            const data = {
-                full_name: document.getElementById('fullName').value,
+        async function saveUser(event) {
+            event.preventDefault();
+            const userData = {
+                full_name: document.getElementById('full_name').value,
                 username: document.getElementById('username').value,
                 email: document.getElementById('email').value,
                 role: document.getElementById('role').value
             };
-            const url = id ? `${API_URL}/${id}` : API_URL;
-            const method = id ? 'PUT' : 'POST';
-            const res = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const json = await res.json();
-            if (json.success) { 
-                closeModal(); 
-                fetchUsers(); 
-            } else { 
-                alert('Gagal: ' + json.message); 
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    closeModal();
+                    fetchUsers();
+                } else {
+                    alert('Gagal: ' + (result.message || result.error));
+                }
+            } catch (error) {
+                alert('Terjadi kesalahan koneksi ke server.');
             }
         }
 
         async function deleteUser(id) {
-            if (confirm('Yakin ingin menghapus user ini?')) {
-                const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-                const json = await res.json();
-                if (json.success) fetchUsers();
+            if (confirm('Apakah Anda yakin ingin menghapus user ini?')) {
+                try {
+                    const response = await fetch(`${API_URL}/${id}`, {
+                        method: 'DELETE'
+                    });
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        fetchUsers();
+                    } else {
+                        alert('Gagal menghapus: ' + result.message);
+                    }
+                } catch (error) {
+                    alert('Terjadi kesalahan saat menghapus data.');
+                }
             }
         }
 
+        // Muat data saat halaman pertama kali dibuka
         fetchUsers();
     </script>
 </body>

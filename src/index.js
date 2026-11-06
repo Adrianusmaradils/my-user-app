@@ -18,7 +18,7 @@ export default {
     try {
       // GET /api/users - Ambil semua user
       if (path === '/api/users' && method === 'GET') {
-        const { results } = await env.DB.prepare('SELECT * FROM users ORDER BY id DESC').all();
+        const { results } = await env.Adrianusmaradils.prepare('SELECT * FROM users ORDER BY id DESC').all();
         return Response.json({ success: true, data: results }, { headers });
       }
 
@@ -29,7 +29,7 @@ export default {
         if (!username || !email || !full_name) {
           return Response.json({ success: false, message: 'Data tidak lengkap' }, { status: 400, headers });
         }
-        await env.DB.prepare(
+        await env.Adrianusmaradils.prepare(
           'INSERT INTO users (username, email, full_name, role) VALUES (?, ?, ?, ?)'
         ).bind(username, email, full_name, role || 'user').run();
         return Response.json({ success: true, message: 'User berhasil ditambahkan' }, { status: 201, headers });
@@ -40,7 +40,7 @@ export default {
         const id = path.split('/')[3];
         const body = await request.json();
         const { username, email, full_name, role } = body;
-        await env.DB.prepare(
+        await env.Adrianusmaradils.prepare(
           'UPDATE users SET username = ?, email = ?, full_name = ?, role = ? WHERE id = ?'
         ).bind(username, email, full_name, role, id).run();
         return Response.json({ success: true, message: 'User berhasil diperbarui' }, { headers });
@@ -49,7 +49,7 @@ export default {
       // DELETE /api/users/:id - Hapus user
       if (path.startsWith('/api/users/') && method === 'DELETE') {
         const id = path.split('/')[3];
-        await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
+        await env.Adrianusmaradils.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
         return Response.json({ success: true, message: 'User berhasil dihapus' }, { headers });
       }
 

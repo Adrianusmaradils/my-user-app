@@ -1,0 +1,15 @@
+{
+  "name": "my-user-app",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-06",
+  "assets": {
+    "directory": "./public"
+  },
+  "d1_databases": [
+    {
+      "binding": "Adrianusmaradils",
+      "database_name": "my-user-db",
+      "database_id": "local-d1-db"
+    }
+  ]
+}
