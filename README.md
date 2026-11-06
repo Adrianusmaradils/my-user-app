@@ -1,45 +1,21 @@
-# My User App 🚀
+# 🚀 Cloudflare Workers User Management App
 
-> A repository containing source code and resources for my user application project.
+Aplikasi web full-stack untuk manajemen pengguna (User Management) yang dibangun menggunakan teknologi modern serverless dan edge computing.
 
----
-
-## 📌 Ringkasan
-
-**My User App** adalah aplikasi yang dirancang untuk mengelola data pengguna secara efisien. Fitur utama mencakup autentikasi, manajemen profil, hingga pengelolaan hak akses (role-based access control).
-
----
+## 🛠️ Teknologi yang Digunakan
+* **Backend:** Cloudflare Workers (JavaScript / ES Modules)
+* **Database:** Cloudflare D1 (SQLite di Edge)
+* **Frontend:** HTML5, Tailwind CSS (CDN)
+* **Tools:** Wrangler CLI, Git & GitHub
 
 ## ✨ Fitur Utama
+* **Create (Tambah):** Menambahkan data pengguna baru (Nama, Username, Email, Role) melalui modal interaktif.
+* **Read (Tampilkan):** Menampilkan daftar seluruh pengguna secara *real-time* dalam bentuk tabel yang rapi.
+* **Delete (Hapus):** Menghapus data pengguna dari database D1.
+* **Edge Deployment:** Berjalan cepat di jaringan global Cloudflare.
 
-- 🔐 **Autentikasi & Otorisasi:** Sistem login, register, dan manajemen token JWT.
-- 👤 **Manajemen Profil:** Pengguna dapat memperbarui data pribadi dan foto profil.
-- 🛠️ **Role Management:** Pembedaan hak akses antara Admin dan User biasa.
-- 📊 **Dashboard Analytics:** Ringkasan statistik aktivitas pengguna secara real-time.
-
----
-
-## 🛠️ Tech Stack
-
-- **Frontend:** React / Next.js / HTML5 & CSS3
-- **Backend:** Node.js / Python (FastAPI)
-- **Database:** PostgreSQL / MongoDB
-- **Containerization:** Docker
-
----
-
-## 🚀 Memulai (Getting Started)
-
-### Prasyarat
-
-Sebelum memulai, pastikan perangkat Anda telah terinstal:
-- [Node.js](https://nodejs.org/) (v18+) atau Python (v3.10+)
-- [Git](https://git-scm.com/)
-- [Docker](https://www.docker.com/) (Opsional)
-
-### Instalasi
-
-1. **Clone repository ini:**
+## ⚙️ Cara Menjalankan Secara Lokal (Development)
+1. Clone repositori ini:
    ```bash
-   git clone [https://github.com/Adrianusmaradils/my-user-app.git](https://github.com/Adrianusmaradils/my-user-app.git)
-   cd my-user-app
+   git clone [https://github.com/USERNAME/nama-repo.git](https://github.com/USERNAME/nama-repo.git)
+   cd nama-repo
